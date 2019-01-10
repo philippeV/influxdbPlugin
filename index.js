@@ -54,8 +54,8 @@ app.post('/query', function (req, res) {
     const getColumnsAsync = util.promisify(getColumns);
     var databaseName;
     var host;
-    let tempAmountOfFields =0;
-    let amountOfFields =0;
+    let tempAmountOfFields = 0;
+    let amountOfFields = 0;
     let indexOf
     if (req.headers['x-host'].lastIndexOf("/") !== req.headers['x-host'].length - 1) {
         databaseName = req.headers['x-host'].substring(req.headers['x-host'].lastIndexOf("/") + 1);
@@ -85,9 +85,9 @@ app.post('/query', function (req, res) {
             // This is to prevent wrong selections and to parse the endresult
             columns.forEach(function (column, index) {
                 fieldsAndTags.forEach(fieldOrTag => {
-                    if (fieldOrTag.name.en.includes("field:") && index === 0){
-                        tempAmountOfFields++;
-                    }
+                        if (fieldOrTag.name.en.includes("field:") && index === 0) {
+                            tempAmountOfFields++;
+                        }
                         if (fieldOrTag.id.localeCompare(column.column_id, 'en', {sensitivity: 'base'}) === 0) {
                             column.column_id = fieldOrTag.id;
                             var influxColumnType;
@@ -150,7 +150,7 @@ app.post('/query', function (req, res) {
                     if (!isFirstColumn) {
                         queryString += ',';
                     }
-                    if(column.column_id === 'time') {
+                    if (column.column_id === 'time') {
                         queryString += ' \"' + column.column_id + '\"';
                         groupByString = columnLevelsToInfluxQuery(column.level, groupByString);
                         isTimeLevelSet = true;
@@ -438,13 +438,13 @@ function parseResultsToCumulioFormat(resultsArray, isFieldInQuery, groupByArray,
 
         serie.values.forEach(value => {
             var tempValue = [];
-            selectionArray.forEach(function(selection, index) {
+            selectionArray.forEach(function (selection, index) {
                 let amountOfAggregationsOnEveryColumnLower = 0;
-                    for(var i=index;i<selectionArray.length;i++) {
-                        if (selectionArray[i][0] === "*" && selectionArray[i][1] === "count") {
-                            amountOfAggregationsOnEveryColumnLower++;
-                        }
+                for (var i = index; i < selectionArray.length; i++) {
+                    if (selectionArray[i][0] === "*" && selectionArray[i][1] === "count") {
+                        amountOfAggregationsOnEveryColumnLower++;
                     }
+                }
                 if (groupByArray.includes(selection[0])) {
                     tempValue.push(serieTagValues[groupByArray.indexOf(selection[0])]);
                 }
@@ -454,9 +454,8 @@ function parseResultsToCumulioFormat(resultsArray, isFieldInQuery, groupByArray,
                     if (!isFieldInQuery) {
                         arrayIndex--;
                     }
-                    if(amountOfFields > 1)
-                    {
-                        arrayIndex -= (amountOfFields*amountOfAggregationsOnEveryColumnLower -1);
+                    if (amountOfFields > 1) {
+                        arrayIndex -= (amountOfFields * amountOfAggregationsOnEveryColumnLower - 1);
                     }
                     if (value[arrayIndex] == null) {
 
@@ -493,7 +492,7 @@ function parseNonePushDownToCumulioFormat(resultsArray, selectedColumns) {
     resultsArray.results[0].series[0].values.forEach(value => {
         let tempValue = [];
         selectedColumns.forEach(selectedColumn => {
-            if(resultsArray.results[0].series[0].columns.includes(selectedColumn)) {
+            if (resultsArray.results[0].series[0].columns.includes(selectedColumn)) {
                 tempValue.push(value[resultsArray.results[0].series[0].columns.indexOf(selectedColumn)])
             }
         })
