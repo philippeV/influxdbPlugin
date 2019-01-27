@@ -33,7 +33,6 @@ app.post('/query', function (req, res) {
     //if (req.headers['x-secret'] !== process.env.CUMULIO_SECRET)
     //return res.status(403).end('Given plugin secret does not match Cumul.io plugin secret.');
 
-    console.log('test1');
     var isFieldInQuery = false;
     var measurement = req.body.id.split("::");
     measurement = measurement[1];
@@ -56,7 +55,6 @@ app.post('/query', function (req, res) {
     var host;
     let tempAmountOfFields = 0;
     let amountOfFields = 0;
-    let indexOf
     if (req.headers['x-host'].lastIndexOf("/") !== req.headers['x-host'].length - 1) {
         databaseName = req.headers['x-host'].substring(req.headers['x-host'].lastIndexOf("/") + 1);
         host = req.headers['x-host'].substring(0, req.headers['x-host'].lastIndexOf("/"));
@@ -69,6 +67,9 @@ app.post('/query', function (req, res) {
     const influxClient = new Influx.InfluxDB({
         host: host,
         database: databaseName,
+        username: req.headers['x-key'],
+        password: req.headers['x-token']
+
     });
 
     getColumnsAsync(measurement, influxClient)
@@ -256,7 +257,35 @@ app.post('/query', function (req, res) {
 
 //3. Authorize not yet implemented currently works as bypass for database name
 app.post('/authorize', function (req, res) {
-    return res.status(200).json('');
+    let databaseName;
+    let host;
+    if (req.body['host'].lastIndexOf("/") !== req.body['host'].length - 1) {
+        databaseName = req.body['host'].substring(req.body['host'].lastIndexOf("/") + 1);
+        host = req.body['host'].substring(0, req.body['host'].lastIndexOf("/"));
+    }
+    else {
+        return res.status(500).end("error: hostname and database name are incorrect")
+    }
+    const influxClient = new Influx.InfluxDB({
+        host: host,
+        database: databaseName,
+        username: req.body['key'],
+        password: req.body['token']
+
+    });
+    return influxClient.getMeasurements()
+        .then(measurements =>{
+            if(measurements.length>0) {
+                return res.status(200).json(measurements);
+            }
+            else{
+                return res.status(500).end('error: combination of username and password is incorrect or no measurements in this database')
+            }
+
+        })
+        .catch(error =>{
+            return res.status(500).end('error: combination of username and password is incorrect')
+        });
 });
 //-----------------------------------------------------------------------------------------------------------------
 //-----------------------------------------helper functions--------------------------------------------------------
@@ -276,9 +305,12 @@ const getSchema = (req, callback) => {
 
         return callback(new Error("error: hostname and database name are incorrect"));
     }
-    var influxClient = new Influx.InfluxDB({
+    const influxClient = new Influx.InfluxDB({
         host: host,
         database: databaseName,
+        username: req.headers['x-key'],
+        password: req.headers['x-token']
+
     });
     var measurementsArray = [];
     console.log(databaseName);
